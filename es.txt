@@ -1,0 +1,54 @@
+//Docker compose
+
+  es:
+    image: elasticsearch:6.8.16
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+
+
+// Install
+RUN pip install elasticsearch==6.8.0
+RUN pip install elasticsearch-dsl==6.4.0
+RUN pip install django-elasticsearch-dsl==6.4.2
+RUN pip install django-elasticsearch-dsl-drf
+
+
+// documents
+from django_elasticsearch_dsl import Document
+from django_elasticsearch_dsl.registries import registry
+
+
+from .models import  CongViec
+
+@registry.register_document
+class CongViecDocument(Document):
+    class Index:
+        name='cvs'
+        settings = {'number_of_shards': 1,
+                    'number_of_replicas': 0}
+
+    class Django:
+        model = CongViec
+        fields = [
+            'name',
+            'note',
+        ]
+
+
+// setting.py
+    'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl_drf',
+ELASTICSEARCH_DSL = {
+    'default':{
+        'hosts': 'es:9200'
+    }
+}
+
+
+// command
+
+from sb_admin.documents import CongViecDocument
+
+data = CongViecDocument.search().query('match', name="testing").to_queryset()
